@@ -19,6 +19,13 @@ dependencies:
   theme_manager:
     git:
       url: https://github.com/GitHubStuff/theme_manager.git
+  time_toggle_buttons:
+    git:
+      url: https://github.com/GitHubStuff/flutter_packages.git
+      path: time_toggle_buttons
+  popover_datetime_picker:
+    git:
+      url: https://github.com/GitHubStuff/popover_datetime_picker.git
   cupertino_icons: ^1.0.3
   flutter_bloc: ^7.0.1
   flutter_modular: ^3.3.0
