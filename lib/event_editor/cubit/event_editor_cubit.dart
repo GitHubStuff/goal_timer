@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:flutter_extras/flutter_extras.dart';
 import 'package:meta/meta.dart';
 
 part 'event_editor_state.dart';
@@ -6,6 +7,8 @@ part 'event_editor_state.dart';
 class EventEditorCubit extends Cubit<EventEditorState> {
   DateTime? _startTime;
   DateTime? _endTime;
+
+  DateTime get startTime => (_startTime ?? DateTime.now()).toUtc().round();
 
   EventEditorCubit() : super(EventEditorInitial());
 

@@ -2,16 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_extras/flutter_extras.dart';
 import 'package:flutter_modular/flutter_modular.dart';
-import 'package:goal_timer/constants.dart' as K;
-import 'package:goal_timer/event_editor/cubit/event_editor_cubit.dart';
+import 'package:moor_flutter/moor_flutter.dart' hide Column;
 import 'package:popover_datetime_picker/popover_datetime_picker.dart';
+import 'package:sqlite_explorer/sqlite_explorer.dart';
 import 'package:theme_manager/theme_manager.dart';
 import 'package:time_toggle_buttons/time_toggle_buttons.dart';
+
+import '../constants.dart' as K;
+import '../database/goal_timer_database.dart';
+import '../event_editor/cubit/event_editor_cubit.dart';
 
 class EventEditor extends StatefulWidget {
   static const String route = '/event_editor';
 
-  EventEditor({Key? key}) : super(key: key);
+  final int recordId;
+
+  EventEditor({Key? key, this.recordId = 0}) : super(key: key);
 
   @override
   _EventEditor createState() => _EventEditor();
@@ -19,12 +25,12 @@ class EventEditor extends StatefulWidget {
 
 ///
 class _EventEditor extends ObservingStatefulWidget<EventEditor> {
-  late final TextEditingController _controller;
+  late final TextEditingController _textEditingController;
 
   @override
   initState() {
     super.initState();
-    _controller = TextEditingController();
+    _textEditingController = TextEditingController();
   }
 
   @override
@@ -36,14 +42,39 @@ class _EventEditor extends ObservingStatefulWidget<EventEditor> {
           ThemeControlWidget(),
         ],
       ),
-      body: _body(),
+      body: _sqliteExplorer(),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Modular.to.pop();
+        onPressed: () async {
+          await _createRecord();
         },
-        tooltip: 'Add Event',
+        tooltip: 'Add Goal',
         child: Icon(Icons.add),
       ),
+    );
+  }
+
+  Future _createRecord() async {
+    final toggleCubit = Modular.get<ToggleButtonsCubit>();
+    final setDateTimeElements = toggleCubit.dateTimeElements();
+    final displayContext = StringExtensions.composeDateTimeItems(setDateTimeElements);
+    final eventEditorCubit = Modular.get<EventEditorCubit>();
+    final dateTime = eventEditorCubit.startTime;
+    final String title = _textEditingController.text.isEmpty ? '${DateTime.now().shortDate()} ${DateTime.now().shortTime()}?' : _textEditingController.text;
+    final GoalTimesCompanion goal = GoalTimesCompanion.insert(
+      title: Value(title),
+      startDateTime: Value(dateTime.toIso8601String()),
+      displayDateTimeElement: Value(displayContext),
+    );
+    final dao = Modular.get<GoalTimeDao>();
+    await dao.insert(goal);
+  }
+
+  Widget _sqliteExplorer() {
+    return SqliteScreenWidget(
+      parentWidget: _body(),
+      enabled: K.enableSqliteExplorer,
+      moorBridge: Modular.get<MoorBridge>(),
+      rowsPerPage: 8,
     );
   }
 
@@ -66,7 +97,7 @@ class _EventEditor extends ObservingStatefulWidget<EventEditor> {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: TextField(
-        controller: _controller,
+        controller: _textEditingController,
         decoration: InputDecoration(
           border: OutlineInputBorder(),
           labelText: 'Event Name',
@@ -80,9 +111,6 @@ class _EventEditor extends ObservingStatefulWidget<EventEditor> {
     return PopoverDateTimePicker(
       key: UniqueKey(),
       onWidget: Container(
-        width: K.buttonWidth,
-        height: K.fontSize * 1.50,
-        color: Colors.blueAccent,
         child: Center(
           child: BlocBuilder<EventEditorCubit, EventEditorState>(
             bloc: Modular.get<EventEditorCubit>(),
@@ -98,39 +126,12 @@ class _EventEditor extends ObservingStatefulWidget<EventEditor> {
             },
           ),
         ),
+        decoration: BoxDecoration(border: Border.all(color: Colors.blueAccent), borderRadius: BorderRadius.circular(10)),
+        height: K.fontSize * 1.50,
+        width: K.buttonWidth,
       ),
       callback: (dateTime) {
         Modular.get<EventEditorCubit>().setStartTime(dateTime);
-      },
-    );
-  }
-
-  Widget _endDateField() {
-    String caption = '[optional End Date]';
-    return PopoverDateTimePicker(
-      key: UniqueKey(),
-      onWidget: Container(
-        width: K.buttonWidth,
-        height: K.fontSize * 1.50,
-        color: Colors.blueAccent,
-        child: Center(
-          child: BlocBuilder<EventEditorCubit, EventEditorState>(
-            bloc: Modular.get<EventEditorCubit>(),
-            builder: (context, state) {
-              if (state is EventEditorDateTimeUpdate) {
-                final DateTime? dateTime = state.endTime;
-                caption = (dateTime == null) ? '[optional End Date]' : '${dateTime.shortDate()} ${dateTime.shortTime()}';
-              }
-              return Text(
-                caption,
-                style: K.textStyle,
-              );
-            },
-          ),
-        ),
-      ),
-      callback: (dateTime) {
-        Modular.get<EventEditorCubit>().setEndTime(dateTime);
       },
     );
   }

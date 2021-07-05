@@ -44,4 +44,5 @@ class GoalTimeDao extends DatabaseAccessor<GoalTimerDatabase> with _$GoalTimeDao
   GoalTimeDao(this.db) : super(db);
   Future<List<GoalTime>> getAllTasks() => select(goalTimes).get();
   Stream<List<GoalTime>> watchAllTasks() => select(goalTimes).watch();
+  Future insert(GoalTimesCompanion goalTimesCompanion) => into(goalTimes).insert(goalTimesCompanion);
 }
