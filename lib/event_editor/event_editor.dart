@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_extras/flutter_extras.dart';
@@ -53,20 +54,49 @@ class _EventEditor extends ObservingStatefulWidget<EventEditor> {
     );
   }
 
+  @override
+  void afterFirstLayout(BuildContext context) {
+    Future.delayed(Duration(milliseconds: 10), () async {
+      if (widget.recordId == 0) return;
+      final GoalTimeDao dao = Modular.get<GoalTimeDao>();
+      GoalTime goalTime = await dao.getTask(widget.recordId);
+      _textEditingController.text = goalTime.title;
+      DateTime start = DateTime.parse(goalTime.start).toLocal();
+      Modular.get<EventEditorCubit>().setStartTime(start);
+      String endDateTime = goalTime.finish;
+      DateTime? finish = (endDateTime == '*') ? null : DateTime.parse(endDateTime).toLocal();
+      Modular.get<EventEditorCubit>().setEndTime(finish);
+      Set<DateTimeElement> elements = goalTime.display.elements;
+      Modular.get<ToggleButtonsCubit>().setSelected(dateTimeElements: elements);
+    });
+  }
+
   Future _createRecord() async {
     final toggleCubit = Modular.get<ToggleButtonsCubit>();
     final setDateTimeElements = toggleCubit.dateTimeElements();
     final displayContext = StringExtensions.composeDateTimeItems(setDateTimeElements);
     final eventEditorCubit = Modular.get<EventEditorCubit>();
     final dateTime = eventEditorCubit.startTime;
-    final String title = _textEditingController.text.isEmpty ? '${DateTime.now().shortDate()} ${DateTime.now().shortTime()}?' : _textEditingController.text;
-    final GoalTimesCompanion goal = GoalTimesCompanion.insert(
-      title: Value(title),
-      startDateTime: Value(dateTime.toIso8601String()),
-      displayDateTimeElement: Value(displayContext),
-    );
+    final String title = _textEditingController.text.isEmpty ? '${DateTime.now().shortDate()} ${DateTime.now().shortTime("h:mm:ss a")}?' : _textEditingController.text;
     final dao = Modular.get<GoalTimeDao>();
-    await dao.insert(goal);
+    if (widget.recordId == 0) {
+      final dt = dateTime.toUtc().toIso8601String();
+      final GoalTimesCompanion goal = GoalTimesCompanion.insert(
+        title: Value(title),
+        start: Value(dt),
+        display: Value(displayContext),
+      );
+      await dao.insertGoal(goal);
+    } else {
+      final dt = dateTime.toUtc().toIso8601String();
+      final GoalTimesCompanion goal = GoalTimesCompanion.insert(
+        id: Value(widget.recordId),
+        title: Value(title),
+        start: Value(dt),
+        display: Value(displayContext),
+      );
+      await dao.updateGoal(goal);
+    }
   }
 
   Widget _sqliteExplorer() {
@@ -110,25 +140,32 @@ class _EventEditor extends ObservingStatefulWidget<EventEditor> {
     String caption = 'Set Goal Date';
     return PopoverDateTimePicker(
       key: UniqueKey(),
-      onWidget: Container(
-        child: Center(
-          child: BlocBuilder<EventEditorCubit, EventEditorState>(
-            bloc: Modular.get<EventEditorCubit>(),
-            builder: (context, state) {
-              if (state is EventEditorDateTimeUpdate) {
-                final DateTime? dateTime = state.startTime;
-                caption = (dateTime == null) ? 'Set Goal Date' : '${dateTime.shortDate()} ${dateTime.shortTime()}';
-              }
-              return Text(
-                caption,
-                style: K.textStyle,
-              );
-            },
+      onWidget: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          child: Center(
+            child: BlocBuilder<EventEditorCubit, EventEditorState>(
+              bloc: Modular.get<EventEditorCubit>(),
+              builder: (context, state) {
+                if (state is EventEditorDateTimeUpdate) {
+                  final DateTime? dateTime = state.startTime;
+                  caption = (dateTime == null) ? 'Set Goal Date' : '${dateTime.shortDate()} ${dateTime.shortTime("h:mm:ss a")}';
+                }
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: AutoSizeText(
+                    caption,
+                    maxLines: 1,
+                    style: K.textStyle,
+                  ),
+                );
+              },
+            ),
           ),
+          decoration: BoxDecoration(border: Border.all(color: Colors.blueAccent), borderRadius: BorderRadius.circular(10)),
+          //height: K.fontSize * 1.70,
+          //width: K.buttonWidth,
         ),
-        decoration: BoxDecoration(border: Border.all(color: Colors.blueAccent), borderRadius: BorderRadius.circular(10)),
-        height: K.fontSize * 1.50,
-        width: K.buttonWidth,
       ),
       callback: (dateTime) {
         Modular.get<EventEditorCubit>().setStartTime(dateTime);

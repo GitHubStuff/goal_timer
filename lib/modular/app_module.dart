@@ -25,6 +25,6 @@ class AppModule extends Module {
   final List<ModularRoute> routes = [
     ChildRoute('/', child: (_, __) => ScaffoldWidget(title: 'empty_package')),
     ModuleRoute(GoalModule.route, module: GoalModule()),
-    ChildRoute(EventEditor.route, child: (_, __) => EventEditor()),
+    ChildRoute(EventEditor.route, child: (_, args) => EventEditor(recordId: args.data)),
   ];
 }

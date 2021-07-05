@@ -1,9 +1,11 @@
 import 'dart:io';
 
+import 'package:flutter_modular/flutter_modular.dart';
 import 'package:moor/ffi.dart';
 import 'package:moor_flutter/moor_flutter.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:sqlite_explorer/sqlite_explorer.dart';
 
 import '../constants.dart' as K;
 
@@ -33,9 +35,9 @@ class GoalTimerDatabase extends _$GoalTimerDatabase {
 class GoalTimes extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get title => text().withLength(min: 1, max: K.maxTitleLength).withDefault(Constant('no title'))();
-  TextColumn get startDateTime => text().withLength(min: 1, max: K.maxTimeLength).withDefault(Constant('*'))();
-  TextColumn get finishDateTime => text().withLength(min: 1, max: K.maxTimeLength).withDefault(Constant('*'))();
-  TextColumn get displayDateTimeElement => text().withLength(min: 8, max: 8).withDefault(Constant('++++++--'))();
+  TextColumn get start => text().withLength(min: 1, max: K.maxTimeLength).withDefault(Constant('*'))();
+  TextColumn get finish => text().withLength(min: 1, max: K.maxTimeLength).withDefault(Constant('*'))();
+  TextColumn get display => text().withLength(min: 8, max: 8).withDefault(Constant('++++++--'))();
 }
 
 @UseDao(tables: [GoalTimes])
@@ -43,6 +45,14 @@ class GoalTimeDao extends DatabaseAccessor<GoalTimerDatabase> with _$GoalTimeDao
   final GoalTimerDatabase db;
   GoalTimeDao(this.db) : super(db);
   Future<List<GoalTime>> getAllTasks() => select(goalTimes).get();
+  Future<GoalTime> getTask(int recordId) async {
+    final sql = 'SELECT * FROM goal_times WHERE id = $recordId LIMIT 1';
+    final moorBridge = Modular.get<MoorBridge>();
+    final List<Map<String, Object?>> result = await moorBridge.rawSql(sql);
+    return GoalTime.fromJson(result[0]);
+  }
+
   Stream<List<GoalTime>> watchAllTasks() => select(goalTimes).watch();
-  Future insert(GoalTimesCompanion goalTimesCompanion) => into(goalTimes).insert(goalTimesCompanion);
+  Future insertGoal(GoalTimesCompanion goalTimesCompanion) => into(goalTimes).insert(goalTimesCompanion);
+  Future updateGoal(GoalTimesCompanion goalTimesCompanion) => update(goalTimes).replace(goalTimesCompanion);
 }

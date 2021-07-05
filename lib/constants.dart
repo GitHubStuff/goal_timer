@@ -8,4 +8,4 @@ const bool enableSqliteExplorer = true;
 
 const TextStyle textStyle = TextStyle(fontSize: fontSize);
 const double fontSize = 30.0;
-const double buttonWidth = 310.0;
+const double buttonWidth = 315.0;

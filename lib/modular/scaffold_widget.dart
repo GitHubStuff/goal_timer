@@ -27,7 +27,7 @@ class _ScaffoldWidget extends ObservingStatefulWidget<ScaffoldWidget> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           //Modular.to.pushNamed(GoalModule.route);
-          Modular.to.pushNamed(EventEditor.route);
+          Modular.to.pushNamed(EventEditor.route, arguments: 1);
         },
         tooltip: 'Increment',
         child: Icon(Icons.add),

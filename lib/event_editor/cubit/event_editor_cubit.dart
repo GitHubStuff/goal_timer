@@ -8,7 +8,7 @@ class EventEditorCubit extends Cubit<EventEditorState> {
   DateTime? _startTime;
   DateTime? _endTime;
 
-  DateTime get startTime => (_startTime ?? DateTime.now()).toUtc().round();
+  DateTime get startTime => (_startTime ?? DateTime.now()).round();
 
   EventEditorCubit() : super(EventEditorInitial());
 
@@ -17,7 +17,7 @@ class EventEditorCubit extends Cubit<EventEditorState> {
     _doEmit(_startTime, _endTime);
   }
 
-  void setEndTime(DateTime dateTime) {
+  void setEndTime(DateTime? dateTime) {
     _endTime = dateTime;
     _doEmit(_startTime, _endTime);
   }

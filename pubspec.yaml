@@ -29,6 +29,7 @@ dependencies:
     git:
       url: https://github.com/GitHubStuff/flutter_packages.git
       path: time_toggle_buttons
+  auto_size_text: ^3.0.0-nullsafety.0
   cupertino_icons: ^1.0.3
   flutter_bloc: ^7.0.1
   flutter_modular: ^3.3.0

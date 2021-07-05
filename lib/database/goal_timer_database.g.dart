@@ -10,15 +10,15 @@ part of 'goal_timer_database.dart';
 class GoalTime extends DataClass implements Insertable<GoalTime> {
   final int id;
   final String title;
-  final String startDateTime;
-  final String finishDateTime;
-  final String displayDateTimeElement;
+  final String start;
+  final String finish;
+  final String display;
   GoalTime(
       {required this.id,
       required this.title,
-      required this.startDateTime,
-      required this.finishDateTime,
-      required this.displayDateTimeElement});
+      required this.start,
+      required this.finish,
+      required this.display});
   factory GoalTime.fromData(Map<String, dynamic> data, GeneratedDatabase db,
       {String? prefix}) {
     final effectivePrefix = prefix ?? '';
@@ -27,12 +27,12 @@ class GoalTime extends DataClass implements Insertable<GoalTime> {
           .mapFromDatabaseResponse(data['${effectivePrefix}id'])!,
       title: const StringType()
           .mapFromDatabaseResponse(data['${effectivePrefix}title'])!,
-      startDateTime: const StringType()
-          .mapFromDatabaseResponse(data['${effectivePrefix}start_date_time'])!,
-      finishDateTime: const StringType()
-          .mapFromDatabaseResponse(data['${effectivePrefix}finish_date_time'])!,
-      displayDateTimeElement: const StringType().mapFromDatabaseResponse(
-          data['${effectivePrefix}display_date_time_element'])!,
+      start: const StringType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}start'])!,
+      finish: const StringType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}finish'])!,
+      display: const StringType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}display'])!,
     );
   }
   @override
@@ -40,9 +40,9 @@ class GoalTime extends DataClass implements Insertable<GoalTime> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['title'] = Variable<String>(title);
-    map['start_date_time'] = Variable<String>(startDateTime);
-    map['finish_date_time'] = Variable<String>(finishDateTime);
-    map['display_date_time_element'] = Variable<String>(displayDateTimeElement);
+    map['start'] = Variable<String>(start);
+    map['finish'] = Variable<String>(finish);
+    map['display'] = Variable<String>(display);
     return map;
   }
 
@@ -50,9 +50,9 @@ class GoalTime extends DataClass implements Insertable<GoalTime> {
     return GoalTimesCompanion(
       id: Value(id),
       title: Value(title),
-      startDateTime: Value(startDateTime),
-      finishDateTime: Value(finishDateTime),
-      displayDateTimeElement: Value(displayDateTimeElement),
+      start: Value(start),
+      finish: Value(finish),
+      display: Value(display),
     );
   }
 
@@ -62,10 +62,9 @@ class GoalTime extends DataClass implements Insertable<GoalTime> {
     return GoalTime(
       id: serializer.fromJson<int>(json['id']),
       title: serializer.fromJson<String>(json['title']),
-      startDateTime: serializer.fromJson<String>(json['startDateTime']),
-      finishDateTime: serializer.fromJson<String>(json['finishDateTime']),
-      displayDateTimeElement:
-          serializer.fromJson<String>(json['displayDateTimeElement']),
+      start: serializer.fromJson<String>(json['start']),
+      finish: serializer.fromJson<String>(json['finish']),
+      display: serializer.fromJson<String>(json['display']),
     );
   }
   @override
@@ -74,35 +73,33 @@ class GoalTime extends DataClass implements Insertable<GoalTime> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'title': serializer.toJson<String>(title),
-      'startDateTime': serializer.toJson<String>(startDateTime),
-      'finishDateTime': serializer.toJson<String>(finishDateTime),
-      'displayDateTimeElement':
-          serializer.toJson<String>(displayDateTimeElement),
+      'start': serializer.toJson<String>(start),
+      'finish': serializer.toJson<String>(finish),
+      'display': serializer.toJson<String>(display),
     };
   }
 
   GoalTime copyWith(
           {int? id,
           String? title,
-          String? startDateTime,
-          String? finishDateTime,
-          String? displayDateTimeElement}) =>
+          String? start,
+          String? finish,
+          String? display}) =>
       GoalTime(
         id: id ?? this.id,
         title: title ?? this.title,
-        startDateTime: startDateTime ?? this.startDateTime,
-        finishDateTime: finishDateTime ?? this.finishDateTime,
-        displayDateTimeElement:
-            displayDateTimeElement ?? this.displayDateTimeElement,
+        start: start ?? this.start,
+        finish: finish ?? this.finish,
+        display: display ?? this.display,
       );
   @override
   String toString() {
     return (StringBuffer('GoalTime(')
           ..write('id: $id, ')
           ..write('title: $title, ')
-          ..write('startDateTime: $startDateTime, ')
-          ..write('finishDateTime: $finishDateTime, ')
-          ..write('displayDateTimeElement: $displayDateTimeElement')
+          ..write('start: $start, ')
+          ..write('finish: $finish, ')
+          ..write('display: $display')
           ..write(')'))
         .toString();
   }
@@ -110,73 +107,67 @@ class GoalTime extends DataClass implements Insertable<GoalTime> {
   @override
   int get hashCode => $mrjf($mrjc(
       id.hashCode,
-      $mrjc(
-          title.hashCode,
-          $mrjc(
-              startDateTime.hashCode,
-              $mrjc(
-                  finishDateTime.hashCode, displayDateTimeElement.hashCode)))));
+      $mrjc(title.hashCode,
+          $mrjc(start.hashCode, $mrjc(finish.hashCode, display.hashCode)))));
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is GoalTime &&
           other.id == this.id &&
           other.title == this.title &&
-          other.startDateTime == this.startDateTime &&
-          other.finishDateTime == this.finishDateTime &&
-          other.displayDateTimeElement == this.displayDateTimeElement);
+          other.start == this.start &&
+          other.finish == this.finish &&
+          other.display == this.display);
 }
 
 class GoalTimesCompanion extends UpdateCompanion<GoalTime> {
   final Value<int> id;
   final Value<String> title;
-  final Value<String> startDateTime;
-  final Value<String> finishDateTime;
-  final Value<String> displayDateTimeElement;
+  final Value<String> start;
+  final Value<String> finish;
+  final Value<String> display;
   const GoalTimesCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
-    this.startDateTime = const Value.absent(),
-    this.finishDateTime = const Value.absent(),
-    this.displayDateTimeElement = const Value.absent(),
+    this.start = const Value.absent(),
+    this.finish = const Value.absent(),
+    this.display = const Value.absent(),
   });
   GoalTimesCompanion.insert({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
-    this.startDateTime = const Value.absent(),
-    this.finishDateTime = const Value.absent(),
-    this.displayDateTimeElement = const Value.absent(),
+    this.start = const Value.absent(),
+    this.finish = const Value.absent(),
+    this.display = const Value.absent(),
   });
   static Insertable<GoalTime> custom({
     Expression<int>? id,
     Expression<String>? title,
-    Expression<String>? startDateTime,
-    Expression<String>? finishDateTime,
-    Expression<String>? displayDateTimeElement,
+    Expression<String>? start,
+    Expression<String>? finish,
+    Expression<String>? display,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (title != null) 'title': title,
-      if (startDateTime != null) 'start_date_time': startDateTime,
-      if (finishDateTime != null) 'finish_date_time': finishDateTime,
-      if (displayDateTimeElement != null)
-        'display_date_time_element': displayDateTimeElement,
+      if (start != null) 'start': start,
+      if (finish != null) 'finish': finish,
+      if (display != null) 'display': display,
     });
   }
 
   GoalTimesCompanion copyWith(
       {Value<int>? id,
       Value<String>? title,
-      Value<String>? startDateTime,
-      Value<String>? finishDateTime,
-      Value<String>? displayDateTimeElement}) {
+      Value<String>? start,
+      Value<String>? finish,
+      Value<String>? display}) {
     return GoalTimesCompanion(
       id: id ?? this.id,
       title: title ?? this.title,
-      startDateTime: startDateTime ?? this.startDateTime,
-      finishDateTime: finishDateTime ?? this.finishDateTime,
-      displayDateTimeElement:
-          displayDateTimeElement ?? this.displayDateTimeElement,
+      start: start ?? this.start,
+      finish: finish ?? this.finish,
+      display: display ?? this.display,
     );
   }
 
@@ -189,15 +180,14 @@ class GoalTimesCompanion extends UpdateCompanion<GoalTime> {
     if (title.present) {
       map['title'] = Variable<String>(title.value);
     }
-    if (startDateTime.present) {
-      map['start_date_time'] = Variable<String>(startDateTime.value);
+    if (start.present) {
+      map['start'] = Variable<String>(start.value);
     }
-    if (finishDateTime.present) {
-      map['finish_date_time'] = Variable<String>(finishDateTime.value);
+    if (finish.present) {
+      map['finish'] = Variable<String>(finish.value);
     }
-    if (displayDateTimeElement.present) {
-      map['display_date_time_element'] =
-          Variable<String>(displayDateTimeElement.value);
+    if (display.present) {
+      map['display'] = Variable<String>(display.value);
     }
     return map;
   }
@@ -207,9 +197,9 @@ class GoalTimesCompanion extends UpdateCompanion<GoalTime> {
     return (StringBuffer('GoalTimesCompanion(')
           ..write('id: $id, ')
           ..write('title: $title, ')
-          ..write('startDateTime: $startDateTime, ')
-          ..write('finishDateTime: $finishDateTime, ')
-          ..write('displayDateTimeElement: $displayDateTimeElement')
+          ..write('start: $start, ')
+          ..write('finish: $finish, ')
+          ..write('display: $display')
           ..write(')'))
         .toString();
   }
@@ -235,38 +225,34 @@ class $GoalTimesTable extends GoalTimes
           typeName: 'TEXT',
           requiredDuringInsert: false,
           defaultValue: Constant('no title'));
-  final VerificationMeta _startDateTimeMeta =
-      const VerificationMeta('startDateTime');
-  late final GeneratedColumn<String?> startDateTime =
-      GeneratedColumn<String?>('start_date_time', aliasedName, false,
+  final VerificationMeta _startMeta = const VerificationMeta('start');
+  late final GeneratedColumn<String?> start =
+      GeneratedColumn<String?>('start', aliasedName, false,
           additionalChecks: GeneratedColumn.checkTextLength(
             minTextLength: 1,
           ),
           typeName: 'TEXT',
           requiredDuringInsert: false,
           defaultValue: Constant('*'));
-  final VerificationMeta _finishDateTimeMeta =
-      const VerificationMeta('finishDateTime');
-  late final GeneratedColumn<String?> finishDateTime =
-      GeneratedColumn<String?>('finish_date_time', aliasedName, false,
+  final VerificationMeta _finishMeta = const VerificationMeta('finish');
+  late final GeneratedColumn<String?> finish =
+      GeneratedColumn<String?>('finish', aliasedName, false,
           additionalChecks: GeneratedColumn.checkTextLength(
             minTextLength: 1,
           ),
           typeName: 'TEXT',
           requiredDuringInsert: false,
           defaultValue: Constant('*'));
-  final VerificationMeta _displayDateTimeElementMeta =
-      const VerificationMeta('displayDateTimeElement');
-  late final GeneratedColumn<String?> displayDateTimeElement =
-      GeneratedColumn<String?>('display_date_time_element', aliasedName, false,
-          additionalChecks: GeneratedColumn.checkTextLength(
-              minTextLength: 8, maxTextLength: 8),
-          typeName: 'TEXT',
-          requiredDuringInsert: false,
-          defaultValue: Constant('++++++--'));
+  final VerificationMeta _displayMeta = const VerificationMeta('display');
+  late final GeneratedColumn<String?> display = GeneratedColumn<String?>(
+      'display', aliasedName, false,
+      additionalChecks:
+          GeneratedColumn.checkTextLength(minTextLength: 8, maxTextLength: 8),
+      typeName: 'TEXT',
+      requiredDuringInsert: false,
+      defaultValue: Constant('++++++--'));
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, title, startDateTime, finishDateTime, displayDateTimeElement];
+  List<GeneratedColumn> get $columns => [id, title, start, finish, display];
   @override
   String get aliasedName => _alias ?? 'goal_times';
   @override
@@ -283,23 +269,17 @@ class $GoalTimesTable extends GoalTimes
       context.handle(
           _titleMeta, title.isAcceptableOrUnknown(data['title']!, _titleMeta));
     }
-    if (data.containsKey('start_date_time')) {
+    if (data.containsKey('start')) {
       context.handle(
-          _startDateTimeMeta,
-          startDateTime.isAcceptableOrUnknown(
-              data['start_date_time']!, _startDateTimeMeta));
+          _startMeta, start.isAcceptableOrUnknown(data['start']!, _startMeta));
     }
-    if (data.containsKey('finish_date_time')) {
-      context.handle(
-          _finishDateTimeMeta,
-          finishDateTime.isAcceptableOrUnknown(
-              data['finish_date_time']!, _finishDateTimeMeta));
+    if (data.containsKey('finish')) {
+      context.handle(_finishMeta,
+          finish.isAcceptableOrUnknown(data['finish']!, _finishMeta));
     }
-    if (data.containsKey('display_date_time_element')) {
-      context.handle(
-          _displayDateTimeElementMeta,
-          displayDateTimeElement.isAcceptableOrUnknown(
-              data['display_date_time_element']!, _displayDateTimeElementMeta));
+    if (data.containsKey('display')) {
+      context.handle(_displayMeta,
+          display.isAcceptableOrUnknown(data['display']!, _displayMeta));
     }
     return context;
   }
