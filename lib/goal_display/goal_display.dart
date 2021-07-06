@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_extras/flutter_extras.dart';
 import 'package:flutter_extras/source/observing_stateful_widget.dart';
 import 'package:flutter_modular/flutter_modular.dart';
-import 'package:goal_timer/event_editor/event_editor.dart';
 import 'package:theme_manager/theme_manager.dart';
 import 'package:time_toggle_buttons/source/time_toggle_buttons_widget.dart';
 
-const int count = 20;
+import '../database/goal_timer_database.dart';
+import '../event_editor/event_editor.dart';
 
 class GoalDisplay extends StatefulWidget {
   GoalDisplay({Key? key}) : super(key: key);
@@ -16,7 +17,7 @@ class GoalDisplay extends StatefulWidget {
 
 ///
 class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
-  List<bool> _isExpanded = List.generate(count, (_) => false);
+  List<bool> _isExpanded = List.generate(0, (_) => false);
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +28,10 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
           ThemeControlWidget(),
         ],
       ),
-      body: _body(),
+      body: _buildGoalList(context),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Modular.to.pushNamed(EventEditor.route);
+          Modular.to.pushNamed(EventEditor.route, arguments: 0);
         },
         tooltip: 'Increment',
         child: Icon(Icons.add),
@@ -38,38 +39,71 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
     );
   }
 
-  Widget _body() {
-    return SingleChildScrollView(
-      child: Container(
-          child: ExpansionPanelList(
-        expansionCallback: (index, isExpanded) {
-          // setState(() {
-          //   _isExpanded[index] = !isExpanded;
-          // });
-        },
-        children: [
-          for (int i = 0; i < count; i++)
-            ExpansionPanel(
-              isExpanded: _isExpanded[i],
-              body: _card(),
-              headerBuilder: (_, isExpanded) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Title'),
-                    Text('Duration'),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [Text('Direction'), Text('TimeStamp')],
-                    ),
-                  ],
-                );
-              },
-            ),
-        ],
-      )),
+  Widget _goalWidget() {
+    return SingleChildScrollView();
+  }
+
+  StreamBuilder<List<GoalTime>> _buildGoalList(BuildContext context) {
+    final dao = Modular.get<GoalTimeDao>();
+    return StreamBuilder(
+      stream: dao.watchAllTasks(),
+      builder: (cntx, AsyncSnapshot<List<GoalTime>> snapshot) {
+        final tasks = snapshot.data ?? [];
+        _isExpanded = List.generate(tasks.length, (_) => false);
+        return ListView.builder(
+          itemBuilder: (_, index) {
+            final item = tasks[index];
+            return _column(goalTime: item);
+          },
+          itemCount: tasks.length,
+        );
+      },
     );
   }
+
+  List<Widget> _primative(List<GoalTime> list) {
+    List<Widget> result = [];
+    return result;
+  }
+
+  Widget _column({required GoalTime goalTime}) {
+    DateTime dt = DateTime.parse(goalTime.start).toLocal();
+    String dateText = '${dt.shortDate()} ${dt.shortTime("h:mm:ss a")}';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(goalTime.title),
+        Text('Duration'),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [Text('Direction'), Text(dateText)],
+        ),
+      ],
+    );
+  }
+
+  // Widget _body() {
+  //   return SingleChildScrollView(
+  //     child: Container(
+  //         child: ExpansionPanelList(
+  //       expansionCallback: (index, isExpanded) {
+  //         // setState(() {
+  //         //   _isExpanded[index] = !isExpanded;
+  //         // });
+  //       },
+  //       children: [
+  //         for (int i = 0; i < 5; i++)
+  //           ExpansionPanel(
+  //             isExpanded: _isExpanded[i],
+  //             body: _card(),
+  //             headerBuilder: (_, isExpanded) {
+  //               return _column(goalTime: goalTime)
+  //             },
+  //           ),
+  //       ],
+  //     )),
+  //   );
+  // }
 
   /// Shown when widget is expanded
   Widget _card() {

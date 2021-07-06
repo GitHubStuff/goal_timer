@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_extras/flutter_extras.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_modular/flutter_modular.dart';
-import 'package:goal_timer/event_editor/event_editor.dart';
 import 'package:theme_manager/theme_manager.dart';
+
+import '../goal_display/goal_module.dart';
 
 class ScaffoldWidget extends StatefulWidget {
   ScaffoldWidget({Key? key, required this.title}) : super(key: key);
@@ -26,8 +27,8 @@ class _ScaffoldWidget extends ObservingStatefulWidget<ScaffoldWidget> {
       body: _body(context),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          //Modular.to.pushNamed(GoalModule.route);
-          Modular.to.pushNamed(EventEditor.route, arguments: 1);
+          Modular.to.pushNamed(GoalModule.route);
+          //Modular.to.pushNamed(EventEditor.route, arguments: 1);
         },
         tooltip: 'Increment',
         child: Icon(Icons.add),
