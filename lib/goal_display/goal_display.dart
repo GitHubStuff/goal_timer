@@ -23,6 +23,10 @@ class GoalDisplay extends StatefulWidget {
 ///
 class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
   late GoalCubit _goalCubit;
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    debugPrint('🔍 AppLifecycleState ${state.toString()}');
+  }
 
   @override
   initState() {
@@ -40,7 +44,7 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Goal Timer'),
+        title: Text('Your Goals'),
         actions: [
           ThemeControlWidget(),
         ],
@@ -48,6 +52,7 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
       body: _goalWidget(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          /// 0 - is Sqlite record id that doesn't exists, so a new record is created.
           Modular.to.pushNamed(EventEditor.route, arguments: 0);
         },
         tooltip: 'Add Goal',
@@ -69,7 +74,7 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
         return ListView.builder(
           itemBuilder: (_, index) {
             final item = tasks[index];
-            return _goalItem(goalTime: item);
+            return _goalItem(goalTime: item, dao: dao);
           },
           itemCount: tasks.length,
         );
@@ -77,21 +82,23 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
     );
   }
 
-  Widget _goalItem({required GoalTime goalTime}) {
+  Widget _goalItem({required GoalTime goalTime, required GoalTimeDao dao}) {
     return Slidable(
       key: UniqueKey(),
       endActionPane: ActionPane(
-        children: const [
+        children: [
           // A SlidableAction can have an icon and/or a label.
           SlidableAction(
-            onPressed: doNothing,
+            onPressed: (context) => dao.deleteGoal(goalTime),
             backgroundColor: Color(0xFFFE4A49),
             foregroundColor: Colors.white,
             icon: Icons.delete,
             label: 'Delete',
           ),
           SlidableAction(
-            onPressed: doNothing,
+            onPressed: (context) {
+              Modular.to.pushNamed(EventEditor.route, arguments: goalTime.id);
+            },
             backgroundColor: Color(0xFF0D47A1),
             foregroundColor: Colors.white,
             icon: Icons.edit,
@@ -150,5 +157,3 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
         });
   }
 }
-
-void doNothing(BuildContext context) {}

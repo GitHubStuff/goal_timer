@@ -53,6 +53,7 @@ class GoalTimeDao extends DatabaseAccessor<GoalTimerDatabase> with _$GoalTimeDao
   }
 
   Stream<List<GoalTime>> watchAllTasks() => select(goalTimes).watch();
+  Future deleteGoal(GoalTime goalTime) => delete(goalTimes).delete(goalTime);
   Future insertGoal(GoalTimesCompanion goalTimesCompanion) => into(goalTimes).insert(goalTimesCompanion);
   Future updateGoal(GoalTimesCompanion goalTimesCompanion) => update(goalTimes).replace(goalTimesCompanion);
 }

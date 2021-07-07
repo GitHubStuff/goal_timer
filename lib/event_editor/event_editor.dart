@@ -29,9 +29,21 @@ class _EventEditor extends ObservingStatefulWidget<EventEditor> {
   late final TextEditingController _textEditingController;
 
   @override
-  initState() {
-    super.initState();
-    _textEditingController = TextEditingController();
+  void afterFirstLayout(BuildContext context) {
+    /// If editing an existing record wait before fetching data
+    Future.delayed(Duration(milliseconds: 10), () async {
+      if (widget.recordId == 0) return;
+      final GoalTimeDao dao = Modular.get<GoalTimeDao>();
+      GoalTime goalTime = await dao.getTask(widget.recordId);
+      _textEditingController.text = goalTime.title;
+      DateTime start = DateTime.parse(goalTime.start).toLocal();
+      Modular.get<EventEditorCubit>().setStartTime(start);
+      String endDateTime = goalTime.finish;
+      DateTime? finish = (endDateTime == '*') ? null : DateTime.parse(endDateTime).toLocal();
+      Modular.get<EventEditorCubit>().setEndTime(finish);
+      Set<DateTimeElement> elements = goalTime.display.elements;
+      Modular.get<ToggleButtonsCubit>().setSelected(dateTimeElements: elements);
+    });
   }
 
   @override
@@ -49,26 +61,32 @@ class _EventEditor extends ObservingStatefulWidget<EventEditor> {
           await _createRecord();
         },
         tooltip: 'Add Goal',
-        child: Icon(Icons.add),
+        child: Text('SAVE'),
       ),
     );
   }
 
   @override
-  void afterFirstLayout(BuildContext context) {
-    Future.delayed(Duration(milliseconds: 10), () async {
-      if (widget.recordId == 0) return;
-      final GoalTimeDao dao = Modular.get<GoalTimeDao>();
-      GoalTime goalTime = await dao.getTask(widget.recordId);
-      _textEditingController.text = goalTime.title;
-      DateTime start = DateTime.parse(goalTime.start).toLocal();
-      Modular.get<EventEditorCubit>().setStartTime(start);
-      String endDateTime = goalTime.finish;
-      DateTime? finish = (endDateTime == '*') ? null : DateTime.parse(endDateTime).toLocal();
-      Modular.get<EventEditorCubit>().setEndTime(finish);
-      Set<DateTimeElement> elements = goalTime.display.elements;
-      Modular.get<ToggleButtonsCubit>().setSelected(dateTimeElements: elements);
-    });
+  initState() {
+    super.initState();
+    _textEditingController = TextEditingController();
+  }
+
+  Widget _body() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        _textField(),
+        SizedBox(height: 18.0),
+        _startDateField(),
+        SizedBox(height: 36.0),
+        _buttons(),
+      ],
+    );
+  }
+
+  Widget _buttons() {
+    return TimeToggleButtons();
   }
 
   Future _createRecord() async {
@@ -77,8 +95,10 @@ class _EventEditor extends ObservingStatefulWidget<EventEditor> {
     final displayContext = StringExtensions.composeDateTimeItems(setDateTimeElements);
     final eventEditorCubit = Modular.get<EventEditorCubit>();
     final dateTime = eventEditorCubit.startTime;
-    final String title = _textEditingController.text.isEmpty ? '${DateTime.now().shortDate()} ${DateTime.now().shortTime("h:mm:ss a")}?' : _textEditingController.text;
+    final String title = _textEditingController.text.isEmpty ? '?' : _textEditingController.text;
     final dao = Modular.get<GoalTimeDao>();
+
+    /// If a new record, perform insert... else update
     if (widget.recordId == 0) {
       final dt = dateTime.toUtc().toIso8601String();
       final GoalTimesCompanion goal = GoalTimesCompanion.insert(
@@ -97,6 +117,7 @@ class _EventEditor extends ObservingStatefulWidget<EventEditor> {
       );
       await dao.updateGoal(goal);
     }
+    Modular.to.pop();
   }
 
   Widget _sqliteExplorer() {
@@ -105,34 +126,6 @@ class _EventEditor extends ObservingStatefulWidget<EventEditor> {
       enabled: K.enableSqliteExplorer,
       moorBridge: Modular.get<MoorBridge>(),
       rowsPerPage: 8,
-    );
-  }
-
-  Widget _body() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        _textField(),
-        SizedBox(height: 18.0),
-        _startDateField(),
-        SizedBox(height: 18.0),
-        //_endDateField(),
-        SizedBox(height: 18.0),
-        _buttons(),
-      ],
-    );
-  }
-
-  Widget _textField() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: TextField(
-        controller: _textEditingController,
-        decoration: InputDecoration(
-          border: OutlineInputBorder(),
-          labelText: 'Event Name',
-        ),
-      ),
     );
   }
 
@@ -173,7 +166,16 @@ class _EventEditor extends ObservingStatefulWidget<EventEditor> {
     );
   }
 
-  Widget _buttons() {
-    return TimeToggleButtons();
+  Widget _textField() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: TextField(
+        controller: _textEditingController,
+        decoration: InputDecoration(
+          border: OutlineInputBorder(),
+          labelText: 'Event Name',
+        ),
+      ),
+    );
   }
 }
