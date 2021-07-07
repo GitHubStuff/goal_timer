@@ -1,10 +1,15 @@
+import 'package:auto_size_text/auto_size_text.dart';
+import 'package:date_time_intervals/date_time_intervals.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_extras/flutter_extras.dart';
 import 'package:flutter_extras/source/observing_stateful_widget.dart';
 import 'package:flutter_modular/flutter_modular.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:goal_timer/goal_display/cubit/goal_cubit.dart';
 import 'package:theme_manager/theme_manager.dart';
-import 'package:time_toggle_buttons/source/time_toggle_buttons_widget.dart';
 
+import '../../constants.dart' as K;
 import '../database/goal_timer_database.dart';
 import '../event_editor/event_editor.dart';
 
@@ -17,7 +22,19 @@ class GoalDisplay extends StatefulWidget {
 
 ///
 class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
-  List<bool> _isExpanded = List.generate(0, (_) => false);
+  late GoalCubit _goalCubit;
+
+  @override
+  initState() {
+    super.initState();
+    _goalCubit = GoalCubit();
+  }
+
+  @override
+  dispose() {
+    _goalCubit.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,19 +45,19 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
           ThemeControlWidget(),
         ],
       ),
-      body: _buildGoalList(context),
+      body: _goalWidget(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Modular.to.pushNamed(EventEditor.route, arguments: 0);
         },
-        tooltip: 'Increment',
+        tooltip: 'Add Goal',
         child: Icon(Icons.add),
       ),
     );
   }
 
   Widget _goalWidget() {
-    return SingleChildScrollView();
+    return _buildGoalList(context);
   }
 
   StreamBuilder<List<GoalTime>> _buildGoalList(BuildContext context) {
@@ -49,11 +66,10 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
       stream: dao.watchAllTasks(),
       builder: (cntx, AsyncSnapshot<List<GoalTime>> snapshot) {
         final tasks = snapshot.data ?? [];
-        _isExpanded = List.generate(tasks.length, (_) => false);
         return ListView.builder(
           itemBuilder: (_, index) {
             final item = tasks[index];
-            return _column(goalTime: item);
+            return _goalItem(goalTime: item);
           },
           itemCount: tasks.length,
         );
@@ -61,64 +77,78 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
     );
   }
 
-  List<Widget> _primative(List<GoalTime> list) {
-    List<Widget> result = [];
-    return result;
-  }
-
-  Widget _column({required GoalTime goalTime}) {
-    DateTime dt = DateTime.parse(goalTime.start).toLocal();
-    String dateText = '${dt.shortDate()} ${dt.shortTime("h:mm:ss a")}';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(goalTime.title),
-        Text('Duration'),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [Text('Direction'), Text(dateText)],
+  Widget _goalItem({required GoalTime goalTime}) {
+    return Slidable(
+      key: UniqueKey(),
+      endActionPane: ActionPane(
+        children: const [
+          // A SlidableAction can have an icon and/or a label.
+          SlidableAction(
+            onPressed: doNothing,
+            backgroundColor: Color(0xFFFE4A49),
+            foregroundColor: Colors.white,
+            icon: Icons.delete,
+            label: 'Delete',
+          ),
+          SlidableAction(
+            onPressed: doNothing,
+            backgroundColor: Color(0xFF0D47A1),
+            foregroundColor: Colors.white,
+            icon: Icons.edit,
+            label: 'Edit',
+          ),
+        ],
+        motion: const ScrollMotion(),
+        dismissible: DismissiblePane(
+          onDismissed: () {},
         ),
-      ],
+      ),
+      child: _card(goalTime: goalTime),
     );
   }
 
-  // Widget _body() {
-  //   return SingleChildScrollView(
-  //     child: Container(
-  //         child: ExpansionPanelList(
-  //       expansionCallback: (index, isExpanded) {
-  //         // setState(() {
-  //         //   _isExpanded[index] = !isExpanded;
-  //         // });
-  //       },
-  //       children: [
-  //         for (int i = 0; i < 5; i++)
-  //           ExpansionPanel(
-  //             isExpanded: _isExpanded[i],
-  //             body: _card(),
-  //             headerBuilder: (_, isExpanded) {
-  //               return _column(goalTime: goalTime)
-  //             },
-  //           ),
-  //       ],
-  //     )),
-  //   );
-  // }
-
-  /// Shown when widget is expanded
-  Widget _card() {
-    return Card(
-        margin: EdgeInsets.all(4.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            TimeToggleButtons(),
-            Text('Duration'),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [Text('Direction'), Text('TS')],
+  Widget _card({required GoalTime goalTime}) {
+    DateTime dt = DateTime.parse(goalTime.start).toLocal();
+    String dateText = '${dt.shortDate()} ${dt.shortTime("h:mm:ss a")}';
+    Set<DateTimeElement> elements = goalTime.display.elements;
+    return BlocBuilder<GoalCubit, GoalState>(
+        bloc: _goalCubit,
+        builder: (cntx, state) {
+          DateTimeIntervals dti = DateTimeIntervals.fromCurrentDateTime(eventDateTime: dt, setOfCalendarItems: elements);
+          final String delta = dti.formattedString();
+          CalendarDirection direction = dti.direction;
+          final directionText = (direction == CalendarDirection.sinceEnd) ? 'Since' : 'Until';
+          return Card(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: K.pad,
+                  child: Text(
+                    goalTime.title,
+                    style: K.textStyle,
+                  ),
+                ),
+                Padding(
+                  padding: K.pad,
+                  child: AutoSizeText(
+                    delta,
+                    style: K.intervalStyle,
+                    maxLines: 1,
+                  ),
+                ),
+                Padding(
+                  padding: K.pad,
+                  child: Text(
+                    '$directionText $dateText',
+                    style: K.dateStyle,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ));
+          );
+        });
   }
 }
+
+void doNothing(BuildContext context) {}

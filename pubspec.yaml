@@ -22,9 +22,10 @@ dependencies:
   sqlite_explorer:
     git:
       url: https://github.com/GitHubStuff/sqlite_explorer.git
-  theme_manager:
+  date_time_intervals:
     git:
-      url: https://github.com/GitHubStuff/theme_manager.git
+      url: https://github.com/GitHubStuff/flutter_packages.git
+      path: date_time_intervals
   time_toggle_buttons:
     git:
       url: https://github.com/GitHubStuff/flutter_packages.git
@@ -33,6 +34,7 @@ dependencies:
   cupertino_icons: ^1.0.3
   flutter_bloc: ^7.0.1
   flutter_modular: ^3.3.0
+  flutter_slidable: ^1.0.0-dev.2
   intl: ^0.17.0
   moor: ^4.4.0
   moor_flutter: ^4.0.0
