@@ -12,6 +12,10 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  date_time_intervals:
+    git:
+      url: https://github.com/GitHubStuff/flutter_packages.git
+      path: date_time_intervals
   flutter_extras:
     git:
       url: https://github.com/GitHubStuff/flutter_packages.git
@@ -22,19 +26,21 @@ dependencies:
   sqlite_explorer:
     git:
       url: https://github.com/GitHubStuff/sqlite_explorer.git
-  date_time_intervals:
-    git:
-      url: https://github.com/GitHubStuff/flutter_packages.git
-      path: date_time_intervals
   time_toggle_buttons:
     git:
       url: https://github.com/GitHubStuff/flutter_packages.git
       path: time_toggle_buttons
+  xfer:
+    git:
+      url: https://github.com/GitHubStuff/flutter_packages.git
+      path: xfer
   auto_size_text: ^3.0.0-nullsafety.0
   cupertino_icons: ^1.0.3
+  floating_bubbles: ^2.1.1
   flutter_bloc: ^7.0.1
   flutter_modular: ^3.3.0
   flutter_slidable: ^1.0.0-dev.2
+  font_awesome_flutter: ^9.1.0
   intl: ^0.17.0
   moor: ^4.4.0
   moor_flutter: ^4.0.0

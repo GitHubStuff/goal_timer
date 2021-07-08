@@ -52,7 +52,15 @@ class GoalTimeDao extends DatabaseAccessor<GoalTimerDatabase> with _$GoalTimeDao
     return GoalTime.fromJson(result[0]);
   }
 
-  Stream<List<GoalTime>> watchAllTasks() => select(goalTimes).watch();
+  Stream<List<GoalTime>> watchAllTasks(bool ascending) {
+    final mode = ascending ? OrderingMode.asc : OrderingMode.desc;
+    return (select(goalTimes)
+          ..orderBy(([
+            (t) => OrderingTerm(expression: t.start, mode: mode),
+          ])))
+        .watch();
+  }
+
   Future deleteGoal(GoalTime goalTime) => delete(goalTimes).delete(goalTime);
   Future insertGoal(GoalTimesCompanion goalTimesCompanion) => into(goalTimes).insert(goalTimesCompanion);
   Future updateGoal(GoalTimesCompanion goalTimesCompanion) => update(goalTimes).replace(goalTimesCompanion);
