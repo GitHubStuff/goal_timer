@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:date_time_intervals/date_time_intervals.dart';
 import 'package:floating_bubbles/floating_bubbles.dart';
@@ -8,13 +10,13 @@ import 'package:flutter_extras/source/observing_stateful_widget.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart' as FA;
-import 'package:goal_timer/prefs/order_by_pref.dart';
-import 'package:theme_manager/theme_manager.dart';
 
 import '../../constants.dart' as K;
 import '../database/goal_timer_database.dart';
 import '../event_editor/event_editor.dart';
 import '../goal_display/cubit/goal_cubit.dart';
+import '../prefs/order_by_pref.dart';
+import '../widgets/popup_menu_button.dart' as W;
 
 class GoalDisplay extends StatefulWidget {
   GoalDisplay({Key? key}) : super(key: key);
@@ -77,7 +79,7 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
         title: Text('Your Goals'),
         actions: [
           _orderButton(),
-          ThemeControlWidget(),
+          W.popupMenuButton(context, (item) {}),
         ],
       ),
       body: _goalWidget(),
@@ -163,8 +165,10 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
                 _triangle(direction: direction),
                 WidgetSize(
                   onChange: (newSize) {
-                    debugPrint('NewSize index: ${goalTime.id} ${newSize.toString()}');
-                    _size = newSize;
+                    if (newSize.height > _size.height) {
+                      debugPrint('NewSize index: ${goalTime.id} ${newSize.toString()}');
+                      _size = Size(max(_size.width, newSize.width), max(_size.height, newSize.height));
+                    }
                   },
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,

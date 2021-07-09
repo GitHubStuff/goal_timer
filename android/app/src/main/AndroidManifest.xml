@@ -31,6 +31,11 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+        </activity>
+        <activity
+           android:name="com.dropbox.core.android.AuthActivity"
+           android:configChanges="orientation|keyboard"
+            android:launchMode="singleTask">
             <intent-filter>
                 <data android:scheme="db-jdngwadvorh5zue" />
                 <action android:name="android.intent.action.VIEW" />
@@ -44,4 +49,6 @@
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 </manifest>
