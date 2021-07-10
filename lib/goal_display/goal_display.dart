@@ -10,6 +10,7 @@ import 'package:flutter_extras/source/observing_stateful_widget.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart' as FA;
+import 'package:goal_timer/dropbox/dropbox_module.dart';
 
 import '../../constants.dart' as K;
 import '../database/goal_timer_database.dart';
@@ -79,7 +80,9 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
         title: Text('Your Goals'),
         actions: [
           _orderButton(),
-          W.popupMenuButton(context, (item) {}),
+          W.popupMenuButton(context, (item) {
+            if (item == 1) Modular.to.pushNamed(DropboxModule.route);
+          }),
         ],
       ),
       body: _goalWidget(),
@@ -165,6 +168,9 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
                 _triangle(direction: direction),
                 WidgetSize(
                   onChange: (newSize) {
+                    /// To avoid jank only use the tallest height, the difference from tallest to smallest is left than 5pts
+                    /// so there is little empty space, and empty space is perferred to constant size adjusts that make
+                    /// the list appear to 'stutter'.
                     if (newSize.height > _size.height) {
                       debugPrint('NewSize index: ${goalTime.id} ${newSize.toString()}');
                       _size = Size(max(_size.width, newSize.width), max(_size.height, newSize.height));
