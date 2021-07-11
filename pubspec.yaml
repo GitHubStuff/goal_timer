@@ -1,7 +1,7 @@
 name: goal_timer
 description: Tracks time until/since a goal was set
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
-version: 0.0.1
+version: 0.0.3
 
 environment:
   sdk: ">=2.13.4 <3.0.0" #Dart SDK 1-JUL-2021
@@ -36,13 +36,14 @@ dependencies:
       path: xfer
   auto_size_text: ^3.0.0-nullsafety.0
   cupertino_icons: ^1.0.3
+  dropbox_client: ^0.8.0
   floating_bubbles: ^2.1.1
   flutter_bloc: ^7.0.1
-  flutter_modular: ^3.3.0
+  flutter_modular: ^3.3.1
   flutter_slidable: ^1.0.0-dev.2
   font_awesome_flutter: ^9.1.0
   intl: ^0.17.0
-  moor: ^4.4.0
+  moor: ^4.4.1
   moor_flutter: ^4.0.0
   path: ^1.8.0
   path_provider: ^2.0.2
@@ -52,7 +53,7 @@ dependencies:
 dev_dependencies:
   build_runner: ^2.0.4
   flutter_launcher_icons: ^0.9.0
-  moor_generator: ^4.3.1
+  moor_generator: ^4.4.0
   test: ^1.17.9
 
 flutter:

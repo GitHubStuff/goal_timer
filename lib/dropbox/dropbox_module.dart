@@ -1,10 +1,10 @@
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:goal_timer/dropbox/cubit/dropbox_cubit.dart';
 
-import 'goal_display.dart';
+import 'dropbox_file_widget.dart';
 
-class GoalModule extends Module {
-  static const String route = '/goal_widget';
+class DropboxModule extends Module {
+  static const String route = '/dropbox_module';
 
   // Provide a list of dependencies to inject into your project
   @override
@@ -15,6 +15,6 @@ class GoalModule extends Module {
   // Provide all the routes for your module
   @override
   final List<ModularRoute> routes = [
-    ChildRoute('/', child: (_, __) => GoalDisplay()),
+    ChildRoute('/', child: (_, __) => DropboxFileWidget()),
   ];
 }

@@ -16,6 +16,11 @@ class ScaffoldWidget extends StatefulWidget {
 
 class _ScaffoldWidget extends ObservingStatefulWidget<ScaffoldWidget> {
   @override
+  initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -28,7 +33,6 @@ class _ScaffoldWidget extends ObservingStatefulWidget<ScaffoldWidget> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Modular.to.pushNamed(GoalModule.route);
-          //Modular.to.pushNamed(EventEditor.route, arguments: 1);
         },
         tooltip: 'Increment',
         child: Icon(Icons.add),
@@ -41,6 +45,13 @@ class _ScaffoldWidget extends ObservingStatefulWidget<ScaffoldWidget> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
+          SlideSwitch(
+              value: false,
+              onChanged: (value) {
+                if (value) {
+                  //_checkAuthorized(true);
+                }
+              }),
           Text('${AppLocalizations.of(context)!.helloWorld} ${DateTime.now()}'), //Example of localization
         ],
       ),

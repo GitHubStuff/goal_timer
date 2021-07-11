@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:date_time_intervals/date_time_intervals.dart';
 import 'package:floating_bubbles/floating_bubbles.dart';
@@ -8,13 +10,15 @@ import 'package:flutter_extras/source/observing_stateful_widget.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart' as FA;
-import 'package:goal_timer/prefs/order_by_pref.dart';
-import 'package:theme_manager/theme_manager.dart';
+import 'package:goal_timer/dropbox/cubit/dropbox_cubit.dart';
+import 'package:goal_timer/dropbox/dropbox_module.dart';
 
 import '../../constants.dart' as K;
 import '../database/goal_timer_database.dart';
 import '../event_editor/event_editor.dart';
 import '../goal_display/cubit/goal_cubit.dart';
+import '../prefs/order_by_pref.dart';
+import '../widgets/popup_menu_button.dart' as W;
 
 class GoalDisplay extends StatefulWidget {
   GoalDisplay({Key? key}) : super(key: key);
@@ -30,6 +34,7 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
   bool _orderAscending = false;
 
   Size _size = Size.zero;
+  String contentText = "Content of Dialog";
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -39,6 +44,8 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
   @override
   initState() {
     super.initState();
+
+    /// Load the sort-order from device preferences.
     OrderByPref.inOrder.then((value) {
       if (value != _orderAscending) {
         Future.delayed(Duration(microseconds: 100), () {
@@ -70,6 +77,41 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
     );
   }
 
+  void _dropboxUpload() async {
+    _goalCubit.uploadGoalsToDropbox();
+    contentText = 'Building goal list';
+    _show();
+    final dao = Modular.get<GoalTimeDao>();
+    final String? data = await dao.getJsonString();
+    if (data == null) {
+      Navigator.pop(context);
+      _goalCubit.uploadToDropboxComplete();
+      return;
+    }
+    setState(() {
+      contentText = 'Uploading goal data';
+    });
+    final dropboxCubit = Modular.get<DropboxCubit>()..initDropbox();
+    dropboxCubit.uploadFileWithProgress(
+      data,
+      fileName: '${DateTime.now().toUtc().asKey()}.json',
+      progress: (up, total) {
+        setState(() {
+          contentText = 'Uploaded $up of $total';
+        });
+      },
+      completed: (up, total) {
+        setState(() {
+          contentText = 'Upload Complete: $up of $total';
+        });
+        Future.delayed(Duration(milliseconds: 750), () {
+          Navigator.pop(context);
+          _goalCubit.uploadToDropboxComplete();
+        });
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,7 +119,18 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
         title: Text('Your Goals'),
         actions: [
           _orderButton(),
-          ThemeControlWidget(),
+          W.popupMenuButton(context, (item) {
+            switch (item) {
+              case K.PopoverButtons.theme:
+                break;
+              case K.PopoverButtons.dropbox:
+                Modular.to.pushNamed(DropboxModule.route);
+                break;
+              case K.PopoverButtons.upload:
+                _dropboxUpload();
+                break;
+            }
+          }),
         ],
       ),
       body: _goalWidget(),
@@ -94,6 +147,23 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
 
   Widget _goalWidget() {
     return _buildGoalList(context);
+  }
+
+  void _show() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text("Uploading Goals to Dropbox"),
+              content: Text(contentText),
+            );
+          },
+        );
+      },
+    );
   }
 
   StreamBuilder<List<GoalTime>> _buildGoalList(BuildContext context) {
@@ -163,8 +233,13 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
                 _triangle(direction: direction),
                 WidgetSize(
                   onChange: (newSize) {
-                    debugPrint('NewSize index: ${goalTime.id} ${newSize.toString()}');
-                    _size = newSize;
+                    /// To avoid jank only use the tallest height, the difference from tallest to smallest is left than 5pts
+                    /// so there is little empty space, and empty space is perferred to constant size adjusts that make
+                    /// the list appear to 'stutter'.
+                    if (newSize.height > _size.height) {
+                      debugPrint('NewSize index: ${goalTime.id} ${newSize.toString()}');
+                      _size = Size(max(_size.width, newSize.width), max(_size.height, newSize.height));
+                    }
                   },
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -4,6 +4,7 @@ import 'package:time_toggle_buttons/time_toggle_buttons.dart';
 
 import '../constants.dart' as K;
 import '../database/goal_timer_database.dart' as DB;
+import '../dropbox/dropbox_module.dart';
 import '../event_editor/cubit/event_editor_cubit.dart';
 import '../event_editor/event_editor.dart';
 import '../goal_display/goal_module.dart';
@@ -26,5 +27,6 @@ class AppModule extends Module {
     ChildRoute('/', child: (_, __) => ScaffoldWidget(title: 'empty_package')),
     ModuleRoute(GoalModule.route, module: GoalModule()),
     ChildRoute(EventEditor.route, child: (_, args) => EventEditor(recordId: args.data)),
+    ModuleRoute(DropboxModule.route, module: DropboxModule()),
   ];
 }
