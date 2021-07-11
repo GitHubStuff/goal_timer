@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_modular/flutter_modular.dart';
@@ -50,6 +51,13 @@ class GoalTimeDao extends DatabaseAccessor<GoalTimerDatabase> with _$GoalTimeDao
     final moorBridge = Modular.get<MoorBridge>();
     final List<Map<String, Object?>> result = await moorBridge.rawSql(sql);
     return GoalTime.fromJson(result[0]);
+  }
+
+  Future<String?> getJsonString() async {
+    List<GoalTime> result = await getAllTasks();
+    if (result.isEmpty) return null;
+    String jsonString = jsonEncode(result);
+    return jsonString;
   }
 
   Stream<List<GoalTime>> watchAllTasks(bool ascending) {

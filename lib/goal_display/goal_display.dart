@@ -10,6 +10,7 @@ import 'package:flutter_extras/source/observing_stateful_widget.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart' as FA;
+import 'package:goal_timer/dropbox/cubit/dropbox_cubit.dart';
 import 'package:goal_timer/dropbox/dropbox_module.dart';
 
 import '../../constants.dart' as K;
@@ -33,6 +34,7 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
   bool _orderAscending = false;
 
   Size _size = Size.zero;
+  String contentText = "Content of Dialog";
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -42,6 +44,8 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
   @override
   initState() {
     super.initState();
+
+    /// Load the sort-order from device preferences.
     OrderByPref.inOrder.then((value) {
       if (value != _orderAscending) {
         Future.delayed(Duration(microseconds: 100), () {
@@ -73,6 +77,41 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
     );
   }
 
+  void _dropboxUpload() async {
+    _goalCubit.uploadGoalsToDropbox();
+    contentText = 'Building goal list';
+    _show();
+    final dao = Modular.get<GoalTimeDao>();
+    final String? data = await dao.getJsonString();
+    if (data == null) {
+      Navigator.pop(context);
+      _goalCubit.uploadToDropboxComplete();
+      return;
+    }
+    setState(() {
+      contentText = 'Uploading goal data';
+    });
+    final dropboxCubit = Modular.get<DropboxCubit>()..initDropbox();
+    dropboxCubit.uploadFileWithProgress(
+      data,
+      fileName: '${DateTime.now().toUtc().asKey()}.json',
+      progress: (up, total) {
+        setState(() {
+          contentText = 'Uploaded $up of $total';
+        });
+      },
+      completed: (up, total) {
+        setState(() {
+          contentText = 'Upload Complete: $up of $total';
+        });
+        Future.delayed(Duration(milliseconds: 750), () {
+          Navigator.pop(context);
+          _goalCubit.uploadToDropboxComplete();
+        });
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,7 +120,16 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
         actions: [
           _orderButton(),
           W.popupMenuButton(context, (item) {
-            if (item == 1) Modular.to.pushNamed(DropboxModule.route);
+            switch (item) {
+              case K.PopoverButtons.theme:
+                break;
+              case K.PopoverButtons.dropbox:
+                Modular.to.pushNamed(DropboxModule.route);
+                break;
+              case K.PopoverButtons.upload:
+                _dropboxUpload();
+                break;
+            }
           }),
         ],
       ),
@@ -99,6 +147,23 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
 
   Widget _goalWidget() {
     return _buildGoalList(context);
+  }
+
+  void _show() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text("Uploading Goals to Dropbox"),
+              content: Text(contentText),
+            );
+          },
+        );
+      },
+    );
   }
 
   StreamBuilder<List<GoalTime>> _buildGoalList(BuildContext context) {

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_extras/flutter_extras.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:goal_timer/dropbox/cubit/dropbox_cubit.dart';
-import 'package:intl/intl.dart';
+import 'package:goal_timer/file_info/file_info_object.dart';
 import 'package:theme_manager/theme_manager.dart';
 
 import '../constants.dart' as K;
@@ -43,11 +43,17 @@ class _DropboxFileWidget extends ObservingStatefulWidget<DropboxFileWidget> {
         ],
       ),
       body: _mainColumn(),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {},
-      //   tooltip: 'Add Goal',
-      //   child: Icon(Icons.add),
-      // ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          String timeStamp = DateTime.now().asKey();
+          String fileName = '$timeStamp.txt';
+          String data = 'This was created $timeStamp for a test! $fileName';
+          final dropboxCubit = Modular.get<DropboxCubit>();
+          dropboxCubit.uploadFile(data, fileName: fileName);
+        },
+        tooltip: 'Upload file',
+        child: K.fileUpload,
+      ),
     );
   }
 
@@ -65,49 +71,49 @@ class _DropboxFileWidget extends ObservingStatefulWidget<DropboxFileWidget> {
     return BlocBuilder<DropboxCubit, DropboxState>(
       bloc: dropboxCubit,
       builder: (cntx, state) {
+        if (state is DropboxUpload) {
+          return Text('Upload: ${state.uploaded} of ${state.total}');
+        }
+        if (state is DropboxUploadCompleted) {
+          dropboxCubit.buildDropboxFileList();
+        }
         if (!(state is DropboxFileList)) return Text('..Waiting');
         final list = state.fileList;
         return Expanded(
-          child: ListView.builder(
-            itemCount: list.length,
-            itemBuilder: (context, index) {
-              final item = list[index];
-              final filesize = item['filesize'];
-              final String path = item['pathLower'];
-              bool isFile = false;
-              var name = item['name'];
-              if (filesize == null) {
-                if (name != '..') name = '/$name';
-              } else {
-                isFile = true;
-              }
-              return ListTile(
-                  title: Text(name),
-                  subtitle: (name == '..')
-                      ? null
-                      : Text((filesize == null)
-                          ? 'Directory'
-                          : NumberFormat(
-                              '###,###,###,###',
-                            ).format(filesize)),
-                  onTap: () async {
-                    if (isFile) {
-                      final link = await dropboxCubit.getTemporaryLink(path);
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(link ?? 'getTemporaryLink error: $path')));
-                    } else {
-                      if (name == '..') {
-                        List<String> legs = path.split('/');
-                        String rebuiltPath = '';
-                        for (int i = 1; i < legs.length - 1; i++) {
-                          rebuiltPath = '$rebuiltPath/${legs[i]}';
-                        }
-                        dropboxCubit.buildDropboxFileList(rebuiltPath);
-                      } else
-                        dropboxCubit.buildDropboxFileList(path);
-                      //await listFolder(path);
-                    }
-                  });
+          child: RefreshIndicator(
+            onRefresh: () async {
+              final dropboxCubit = Modular.get<DropboxCubit>();
+              dropboxCubit.buildDropboxFileList();
             },
+            child: ListView.builder(
+              itemCount: list.length,
+              itemBuilder: (context, index) {
+                final dbf = FileInfoObject.dropbox(list[index]);
+                return Card(
+                  child: ListTile(
+                      leading: dbf.icon,
+                      title: Text(dbf.name),
+                      subtitle: (dbf.isBackPath)
+                          ? null
+                          : Text(
+                              (dbf.isDirectory) ? 'Directory' : dbf.sizeString! + " bytes",
+                            ),
+                      onTap: () async {
+                        if (dbf.isFile) {
+                          final link = await dropboxCubit.getTemporaryLink(dbf.path);
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(link ?? 'getTemporaryLink error: ${dbf.path}')));
+                        } else {
+                          if (dbf.isBackPath) {
+                            String rebuiltPath = dbf.backPath();
+                            dropboxCubit.buildDropboxFileList(path: rebuiltPath);
+                          } else
+                            dropboxCubit.buildDropboxFileList(path: dbf.path);
+                          //await listFolder(path);
+                        }
+                      }),
+                );
+              },
+            ),
           ),
         );
       },
@@ -116,32 +122,25 @@ class _DropboxFileWidget extends ObservingStatefulWidget<DropboxFileWidget> {
 
   Widget _useDropbox() {
     final dropboxCubit = Modular.get<DropboxCubit>();
-    Widget widget = SpinnerWidget.text('');
+    Widget widget = SpinnerWidget.text('Awaiting state');
     return BlocBuilder<DropboxCubit, DropboxState>(
       bloc: dropboxCubit,
       builder: (cntx, state) {
         if (state is DropboxAuthorized) {
-          if (state.authorized) dropboxCubit.buildDropboxFileList('');
-          widget = SlideSwitch(
+          if (state.authorized) dropboxCubit.buildDropboxFileList();
+          widget = SwitchListTile(
             key: UniqueKey(),
+            title: Text('Use Dropbox'),
             value: state.authorized,
+            secondary: K.dropboxIcon,
             onChanged: (value) {
               value ? dropboxCubit.checkAuthorized(true) : dropboxCubit.unlinkFromDropbox();
             },
           );
         }
-
         return Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Row(
-            children: [
-              widget,
-              SizedBox(width: 12.0),
-              Text('Use Dropbox'),
-              SizedBox(width: 12.0),
-              K.dropboxIcon,
-            ],
-          ),
+          child: widget,
         );
       },
     );
