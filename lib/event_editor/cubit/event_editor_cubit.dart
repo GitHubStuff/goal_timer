@@ -27,4 +27,9 @@ class EventEditorCubit extends Cubit<EventEditorState> {
       emit(EventEditorDateTimeUpdate(start, end));
     });
   }
+
+  void reset() {
+    _startTime = _endTime = null;
+    emit(EventEditorInitial());
+  }
 }

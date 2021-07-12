@@ -30,6 +30,9 @@ class _EventEditor extends ObservingStatefulWidget<EventEditor> {
 
   @override
   void afterFirstLayout(BuildContext context) {
+    final eventEditorCubit = Modular.get<EventEditorCubit>();
+    eventEditorCubit.reset();
+
     /// If editing an existing record wait before fetching data
     Future.delayed(Duration(milliseconds: 10), () async {
       if (widget.recordId == 0) return;
@@ -37,10 +40,10 @@ class _EventEditor extends ObservingStatefulWidget<EventEditor> {
       GoalTime goalTime = await dao.getTask(widget.recordId);
       _textEditingController.text = goalTime.title;
       DateTime start = DateTime.parse(goalTime.start).toLocal();
-      Modular.get<EventEditorCubit>().setStartTime(start);
+      eventEditorCubit.setStartTime(start);
       String endDateTime = goalTime.finish;
       DateTime? finish = (endDateTime == '*') ? null : DateTime.parse(endDateTime).toLocal();
-      Modular.get<EventEditorCubit>().setEndTime(finish);
+      eventEditorCubit.setEndTime(finish);
       Set<DateTimeElement> elements = goalTime.display.elements;
       Modular.get<ToggleButtonsCubit>().setSelected(dateTimeElements: elements);
     });
@@ -89,9 +92,11 @@ class _EventEditor extends ObservingStatefulWidget<EventEditor> {
     return TimeToggleButtons();
   }
 
+  /// When user taps the FAB - creates a new record in the database
   Future _createRecord() async {
     final toggleCubit = Modular.get<ToggleButtonsCubit>();
     final setDateTimeElements = toggleCubit.dateTimeElements();
+    toggleCubit.reset();
     final displayContext = StringExtensions.composeDateTimeItems(setDateTimeElements);
     final eventEditorCubit = Modular.get<EventEditorCubit>();
     final dateTime = eventEditorCubit.startTime;
@@ -117,6 +122,7 @@ class _EventEditor extends ObservingStatefulWidget<EventEditor> {
       );
       await dao.updateGoal(goal);
     }
+    eventEditorCubit.reset();
     Modular.to.pop();
   }
 
@@ -131,40 +137,72 @@ class _EventEditor extends ObservingStatefulWidget<EventEditor> {
 
   Widget _startDateField() {
     String caption = 'Set Goal Date';
-    return PopoverDateTimePicker(
-      key: UniqueKey(),
-      onWidget: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Container(
-          child: Center(
-            child: BlocBuilder<EventEditorCubit, EventEditorState>(
-              bloc: Modular.get<EventEditorCubit>(),
-              builder: (context, state) {
-                if (state is EventEditorDateTimeUpdate) {
-                  final DateTime? dateTime = state.startTime;
-                  caption = (dateTime == null) ? 'Set Goal Date' : '${dateTime.shortDate()} ${dateTime.shortTime("h:mm:ss a")}';
-                }
-                return Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: AutoSizeText(
-                    caption,
-                    maxLines: 1,
-                    style: K.textStyle,
+    final eventEditorCubit = Modular.get<EventEditorCubit>();
+    return BlocBuilder<EventEditorCubit, EventEditorState>(
+        bloc: eventEditorCubit,
+        builder: (context, state) {
+          if (state is EventEditorDateTimeUpdate) {
+            final DateTime? dateTime = state.startTime;
+            caption = (dateTime == null) ? 'Set Goal Date' : '${dateTime.shortDate()} ${dateTime.shortTime("h:mm:ss a")}';
+          }
+          return PopoverDateTimePicker(
+            callback: (dateTime) => eventEditorCubit.setStartTime(dateTime),
+            initalDateTime: eventEditorCubit.startTime,
+            key: UniqueKey(),
+            onWidget: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: AutoSizeText(
+                      caption,
+                      maxLines: 1,
+                      style: K.textStyle,
+                    ),
                   ),
-                );
-              },
+                ),
+              ),
             ),
-          ),
-          decoration: BoxDecoration(border: Border.all(color: Colors.blueAccent), borderRadius: BorderRadius.circular(10)),
-          //height: K.fontSize * 1.70,
-          //width: K.buttonWidth,
-        ),
-      ),
-      callback: (dateTime) {
-        Modular.get<EventEditorCubit>().setStartTime(dateTime);
-      },
-    );
+          );
+        });
   }
+  /* return PopoverDateTimePicker(
+            initalDateTime: eventEditorCubit.startTime,
+            key: UniqueKey(),
+            onWidget: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                child: Center(
+                  child: BlocBuilder<EventEditorCubit, EventEditorState>(
+                    bloc: eventEditorCubit,
+                    builder: (context, state) {
+                      if (state is EventEditorDateTimeUpdate) {
+                        final DateTime? dateTime = state.startTime;
+                        caption = (dateTime == null) ? 'Set Goal Date' : '${dateTime.shortDate()} ${dateTime.shortTime("h:mm:ss a")}';
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: AutoSizeText(
+                          caption,
+                          maxLines: 1,
+                          style: K.textStyle,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                decoration: BoxDecoration(border: Border.all(color: Colors.blueAccent), borderRadius: BorderRadius.circular(10)),
+                //height: K.fontSize * 1.70,
+                //width: K.buttonWidth,
+              ),
+            ),
+            callback: (dateTime) {
+              Modular.get<EventEditorCubit>().setStartTime(dateTime);
+            },
+          );
+        });
+  } */
 
   Widget _textField() {
     return Padding(
