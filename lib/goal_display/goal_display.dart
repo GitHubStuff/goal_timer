@@ -217,7 +217,7 @@ class _GoalDisplay extends ObservingStatefulWidget<GoalDisplay> {
 
   Widget _card({required GoalTime goalTime}) {
     DateTime dt = DateTime.parse(goalTime.start).toLocal();
-    String dateText = '${dt.shortDate()} ${dt.shortTime("h:mm:ss a")}';
+    String dateText = '${dt.shortDate(" EEE dd-MMM-yyyy")} ${dt.shortTime("h:mm:ss a")}';
     Set<DateTimeElement> elements = goalTime.display.elements;
     return BlocBuilder<GoalCubit, GoalState>(
         bloc: _goalCubit,
